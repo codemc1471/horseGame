@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가상 경마 게임</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .race-track {
+            border: 2px solid #333;
+            height: 400px;
+            margin: 20px 0;
+            position: relative;
+            background: url('assets/background.png') no-repeat;
+            background-size: auto 100%;
+            background-position: 0 0;
+            background-color: #90EE90;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            perspective: 1200px;
+            transform-style: preserve-3d;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .horse {
+            width: 48px;
+            height: 48px;
+            position: absolute;
+            left: 50px;
+            transition: left 0.1s linear;
+            background: url('assets/horse_sprite.png') no-repeat;
+            background-size: 384px 48px;
+            animation: horseRun 0.8s steps(8) infinite;
+            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+            transform: scale(1.2);
+            transform-origin: center bottom;
+        }
+        .horse:nth-child(1) {
+            top: 60px;
+            z-index: 3;
+            transform: scale(1.2) translateZ(50px);
+        }
+        .horse:nth-child(2) {
+            top: 160px;
+            z-index: 2;
+            transform: scale(1.2) translateZ(0);
+        }
+        .horse:nth-child(3) {
+            top: 260px;
+            z-index: 1;
+            transform: scale(1.2) translateZ(-50px);
+        }
+        .betting-area {
+            margin-top: 20px;
+        }
+        .betting-form {
+            display: grid;
+            gap: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        @keyframes horseRun {
+            from { background-position: 0px 0px; }
+            to { background-position: -384px 0px; }
+        }
+        .horse.slow {
+            animation-duration: 1.2s;
+            transform: scale(1.2) translateZ(50px) translateY(-10px);
+        }
+        .horse.medium {
+            animation-duration: 0.8s;
+            transform: scale(1.2) translateZ(0) translateY(0);
+        }
+        .horse.fast {
+            animation-duration: 0.4s;
+            transform: scale(1.2) translateZ(-50px) translateY(10px);
+        }
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .race-track {
+                height: 300px;
+            }
+
+            .horse {
+                transform: scale(1);
+            }
+
+            .horse:nth-child(1) {
+                top: 40px;
+                transform: scale(1) translateZ(50px);
+            }
+
+            .horse:nth-child(2) {
+                top: 120px;
+                transform: scale(1) translateZ(0);
+            }
+
+            .horse:nth-child(3) {
+                top: 200px;
+                transform: scale(1) translateZ(-50px);
+            }
+        }
+        @media screen and (max-width: 480px) {
+            .race-track {
+                height: 250px;
+            }
+
+            .horse {
+                transform: scale(0.8);
+            }
+
+            .horse:nth-child(1) {
+                top: 30px;
+                transform: scale(0.8) translateZ(50px);
+            }
+
+            .horse:nth-child(2) {
+                top: 100px;
+                transform: scale(0.8) translateZ(0);
+            }
+
+            .horse:nth-child(3) {
+                top: 170px;
+                transform: scale(0.8) translateZ(-50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>가상 경마 게임</h1>
+        </div>
+        
+        <div class="race-track">
+            <div class="horse" id="horse1"></div>
+            <div class="horse" id="horse2"></div>
+            <div class="horse" id="horse3"></div>
+        </div>
+
+        <div class="betting-area">
+            <h3>베팅하기</h3>
+            <div class="betting-form">
+                <select id="horse-select">
+                    <option value="1">1번 말</option>
+                    <option value="2">2번 말</option>
+                    <option value="3">3번 말</option>
+                </select>
+                <input type="number" id="bet-amount" placeholder="베팅 금액" min="1000" step="1000">
+                <button onclick="startRace()">경주 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRacing = false;
+
+        function startRace() {
+            if (isRacing) return;
+            
+            const betAmount = parseInt(document.getElementById('bet-amount').value);
+            const selectedHorse = document.getElementById('horse-select').value;
+            
+            if (betAmount < 1000) {
+                alert('최소 베팅 금액은 1000원입니다!');
+                return;
+            }
+
+            isRacing = true;
+
+            const raceTrack = document.querySelector('.race-track');
+            const trackWidth = raceTrack.offsetWidth;
+            const trackHeight = raceTrack.offsetHeight;
+            const bgOriginalWidth = 800; // 배경 원본 너비(px)
+            const bgOriginalHeight = 400; // 배경 원본 높이(px)
+            const bgWidth = (bgOriginalWidth / bgOriginalHeight) * trackHeight;
+            let bgPosition = 0;
+            let positions = [50, 50, 50]; // 모든 말의 시작 위치를 50으로 통일
+
+            // 말들의 초기 위치 설정
+            const horses = document.querySelectorAll('.horse');
+            horses.forEach(horse => {
+                horse.style.left = '50px';
+                horse.classList.remove('slow', 'medium', 'fast');
+            });
+
+            // 경주 시작
+            const offset = -60; // 오른쪽으로 더 이동할 픽셀 수
+            const raceInterval = setInterval(() => {
+                let finished = true;
+                
+                for (let i = 0; i < 3; i++) {
+                    const speed = Math.random() * 2;
+                    positions[i] += speed;
+                    horses[i].style.left = positions[i] + 'px';
+                    horses[i].classList.remove('slow', 'medium', 'fast');
+                    if (speed < 0.7) {
+                        horses[i].classList.add('slow');
+                    } else if (speed < 1.4) {
+                        horses[i].classList.add('medium');
+                    } else {
+                        horses[i].classList.add('fast');
+                    }
+                    if (positions[i] < trackWidth - 100) {  // 모든 말이 동일한 거리만큼 가도록 수정
+                        finished = false;
+                    }
+                }
+
+                // 배경 이동
+                const maxBgPosition = Math.max(0, Math.round(bgWidth - (trackWidth - offset)));
+                if (bgPosition < maxBgPosition) {
+                    bgPosition = Math.min(bgPosition + 1, maxBgPosition);
+                    raceTrack.style.backgroundPosition = `-${bgPosition}px 0`;
+                } else {
+                    raceTrack.style.backgroundPosition = `-${maxBgPosition}px 0`;
+                }
+
+                if (finished) {
+                    clearInterval(raceInterval);
+                    isRacing = false;
+                    
+                    // 승자 결정
+                    const winner = positions.indexOf(Math.max(...positions)) + 1;
+
+                    alert("승자는 " + winner + "번 말입니다.");
+                    
+                    if (winner == selectedHorse) {
+                        const winAmount = betAmount * 2;
+                        alert('축하합니다! ' + winAmount + '원을 획득하셨습니다!');
+                    } else {
+                        alert('아쉽네요. 다음 기회에!');
+                    }
+                }
+            }, 50);
+        }
+    </script>
+</body>
+</html> 
